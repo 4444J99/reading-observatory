@@ -39,6 +39,38 @@ def load_essay_tags(path: str | Path) -> set[str]:
         return set()
 
 
+def _load_json_records(path: str | Path, context_name: str) -> list[dict]:
+    """Load and validate JSON record list from file.
+
+    Returns [] if file does not exist.
+    Raises ValueError if file is corrupt, not a list, or contains non-dict records.
+    """
+    path = Path(path)
+    if not path.exists():
+        return []
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        raise ValueError(f"Corrupt JSON in {context_name} file '{path}': {e}") from e
+
+    if not isinstance(data, list):
+        raise ValueError(
+            f"Invalid container shape in {context_name} file '{path}': "
+            f"expected list, got {type(data).__name__}"
+        )
+
+    for idx, item in enumerate(data):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"Invalid record shape in {context_name} file '{path}' at index {idx}: "
+                f"expected dict, got {type(item).__name__}"
+            )
+
+    return data
+
+
 def archive_expired(
     surfaced_path: str | Path,
     archive_dir: str | Path,
@@ -48,15 +80,7 @@ def archive_expired(
     surfaced_path = Path(surfaced_path)
     archive_dir = Path(archive_dir)
 
-    if not surfaced_path.exists():
-        return 0
-
-    try:
-        with open(surfaced_path) as f:
-            items = json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError):
-        return 0
-
+    items = _load_json_records(surfaced_path, "surfaced")
     if not items:
         return 0
 
@@ -82,10 +106,8 @@ def archive_expired(
     if expired:
         archive_dir.mkdir(parents=True, exist_ok=True)
         archive_file = archive_dir / f"archived-{now.strftime('%Y-%m-%d')}.json"
-        existing = []
-        if archive_file.exists():
-            with open(archive_file) as f:
-                existing = json.load(f)
+        existing = _load_json_records(archive_file, "archive")
+
         with open(archive_file, "w") as f:
             json.dump(existing + expired, f, indent=2, ensure_ascii=False)
             f.write("\n")
@@ -216,13 +238,7 @@ def aggregate(config: ObservatoryConfig, dry_run: bool = False) -> dict:
 
     # 9. Load existing surfaced items and merge
     surfaced_path = Path(paths.surfaced_path)
-    existing_surfaced = []
-    if surfaced_path.exists():
-        try:
-            with open(surfaced_path) as f:
-                existing_surfaced = json.load(f)
-        except (json.JSONDecodeError, FileNotFoundError):
-            existing_surfaced = []
+    existing_surfaced = _load_json_records(surfaced_path, "surfaced")
 
     # Tag new items with surfaced date
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
