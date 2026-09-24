@@ -1,4 +1,4 @@
-[![ORGAN-V: Logos](https://img.shields.io/badge/ORGAN--V-Logos-0d47a1?style=flat-square)](https://github.com/organvm-v-logos) [![CI](https://github.com/organvm-v-logos/reading-observatory/actions/workflows/ci.yml/badge.svg)](https://github.com/organvm-v-logos/reading-observatory/actions/workflows/ci.yml) [![Tier: Standard](https://img.shields.io/badge/tier-standard-4fc3f7?style=flat-square)](#how-it-fits-the-system) [![Status: Candidate](https://img.shields.io/badge/status-candidate-brightgreen?style=flat-square)]()
+[![ORGAN-V: Logos](https://img.shields.io/badge/ORGAN--V-Logos-0d47a1?style=flat-square)](https://github.com/organvm-v-logos) [![CI](https://github.com/organvm-v-logos/reading-observatory/actions/workflows/ci.yml/badge.svg)](https://github.com/organvm-v-logos/reading-observatory/actions/workflows/ci.yml) [![Tier: Standard](https://img.shields.io/badge/tier-standard-4fc3f7?style=flat-square)](#how-it-fits-the-system) [![Status: Shipped](https://img.shields.io/badge/status-shipped-brightgreen?style=flat-square)](https://github.com/organvm-v-logos/reading-observatory/releases)
 
 # reading-observatory
 
@@ -6,12 +6,9 @@ _Curated reading lists, bibliography management, and RSS aggregation for the ORG
 
 ---
 
-> **Status: CANDIDATE**
+> **Status: SHIPPED**
 >
-> reading-observatory is fully implemented with 4 source modules, 67 tests,
-> 4 curated bibliography collections (17 entries), 13 RSS feed subscriptions,
-> and a weekly aggregation pipeline. Both produce edges (`curated-reading-lists`
-> and `relevant-articles`) are fulfilled.
+> reading-observatory is deployed and active with published release artifacts, CLI entrypoints (`observatory-aggregate`, `observatory-validate`, `observatory-newsletter`), 80 tests, 4 curated bibliography collections, 13 RSS feed subscriptions, automated release workflows, and a weekly aggregation pipeline.
 
 ---
 
@@ -201,9 +198,27 @@ pip install -e ".[dev]"
 
 No database setup is required. No environment variables need to be configured. The repository is self-contained: all state lives in flat files (YAML, JSON, OPML) that are version-controlled alongside the code.
 
+### Package Entrypoints & CLI Commands
+
+`reading-observatory` exposes three primary CLI entrypoints:
+
+```bash
+# 1. Run feed aggregation (or smoke test dry-run)
+observatory-aggregate --dry-run
+observatory-aggregate --essays-index ../public-process/data/essays-index.json
+
+# 2. Validate bibliographies YAML schema
+observatory-validate bibliographies/
+
+# 3. Generate curated reading list newsletter
+observatory-newsletter --surfaced feeds/surfaced.json --output docs/newsletter.md
+```
+
 ### Running the Feed Aggregator
 
 ```bash
+observatory-aggregate
+# or via module:
 python -m src.aggregator
 ```
 
@@ -212,13 +227,13 @@ The pipeline reads `feeds/subscriptions.opml`, fetches all subscribed feeds, app
 To run a dry run that loads vocabularies without fetching feeds:
 
 ```bash
-python -m src.aggregator --dry-run
+observatory-aggregate --dry-run
 ```
 
 To point at a specific essays-index.json:
 
 ```bash
-python -m src.aggregator --essays-index ../public-process/data/essays-index.json
+observatory-aggregate --essays-index ../public-process/data/essays-index.json
 ```
 
 ### Running Tests
@@ -231,8 +246,14 @@ ruff check src/ tests/
 ### Validating Bibliographies
 
 ```bash
+observatory-validate bibliographies/
+# or via module:
 python -m src.bibliographies --validate bibliographies/
 ```
+
+### Release Pipeline
+
+Releases are published automatically via `.github/workflows/release.yml` when a version tag (e.g. `v0.2.0`) is pushed to the repository. The workflow builds Python wheel and source distribution packages and publishes them to GitHub Releases.
 
 ### Adding a New Feed
 
