@@ -21,7 +21,7 @@ from pathlib import Path
 
 from src.bibliographies import extract_tags, load_all_bibliographies
 from src.config import ObservatoryConfig
-from src.feeds import deduplicate, fetch_all_feeds, load_seen, parse_opml, save_seen
+from src.feeds import deduplicate, fetch_all_feeds, hash_url, load_seen, parse_opml, save_seen
 from src.matcher import build_vocabulary, score_items
 
 
@@ -228,7 +228,7 @@ def aggregate(config: ObservatoryConfig, dry_run: bool = False) -> dict:
 
     # 6. Deduplicate
     seen = load_seen(paths.seen_path)
-    new_items = deduplicate(all_items, seen)
+    new_items = deduplicate(all_items, dict(seen))
 
     # 7. Score
     scored = score_items(new_items, vocabulary, collection_tags, scoring.min_score)
@@ -253,6 +253,11 @@ def aggregate(config: ObservatoryConfig, dry_run: bool = False) -> dict:
     with open(surfaced_path, "w") as f:
         json.dump(merged, f, indent=2, ensure_ascii=False)
         f.write("\n")
+
+    for item in scored:
+        url = item.get("url", "")
+        if url:
+            seen[hash_url(url)] = today
 
     save_seen(paths.seen_path, seen)
 
