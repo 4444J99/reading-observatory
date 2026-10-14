@@ -5,14 +5,14 @@ display_name: "Reading Observatory — RSS feed aggregation, curated reading lis
 
 delivery:
 - platform: python_library
-  status: in_progress
+  status: shipped
   priority: high
   notes: "Weekly RSS aggregation, bibliography validation, reading curation"
-  next_action: "Complete feed aggregation and curation pipeline"
+  next_action: "Maintain feed aggregation and curation pipeline"
 
 content:
 - platform: docs_site
-  status: not_started
+  status: in_progress
   priority: medium
   notes: "Feed source configuration, curation methodology, list format"
   next_action: "Document feed sources and curation workflow"
